@@ -654,17 +654,17 @@ class TwitterScraper {
     }
   }
   
-  // 使用Gemini API生成回复
+  // 使用DeepSeek API生成回复
   async generateAiReply(tweetContent, author) {
     try {
       // 从存储中获取API Key
       const result = await chrome.storage.local.get(['twitter_config']);
       const config = result.twitter_config || {};
       const apiKey = config.apiKey;
-      
+
       if (!apiKey) {
-        console.error('未配置Gemini API Key');
-        alert('请先在扩展设置中配置Gemini API Key');
+        console.error('未配置DeepSeek API Key');
+        alert('请先在扩展设置中配置DeepSeek API Key');
         return null;
       }
       
@@ -681,18 +681,18 @@ class TwitterScraper {
 4. 可以包含适当的表情符号
 5. 直接返回回复内容，不要包含引号或其他格式`;
       
-      // 调用Gemini API
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      // 调用DeepSeek API
+      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
+          model: 'deepseek-chat',
+          messages: [
+            { role: 'user', content: prompt }
+          ]
         })
       });
       
@@ -702,8 +702,8 @@ class TwitterScraper {
       
       const data = await response.json();
       
-      if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
-        const generatedText = data.candidates[0].content.parts[0].text.trim();
+      if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+        const generatedText = data.choices[0].message.content.trim();
         console.log('AI生成的回复:', generatedText);
         return generatedText;
       } else {
@@ -712,7 +712,7 @@ class TwitterScraper {
       }
       
     } catch (error) {
-      console.error('调用Gemini API失败:', error);
+      console.error('调用DeepSeek API失败:', error);
       alert('AI回复生成失败: ' + error.message);
       return null;
     }
@@ -759,10 +759,10 @@ class TwitterScraper {
       const result = await chrome.storage.local.get(['twitter_config']);
       const config = result.twitter_config || {};
       const apiKey = config.apiKey;
-      
+
       if (!apiKey) {
-        console.error('未配置Gemini API Key');
-        alert('请先在扩展设置中配置Gemini API Key');
+        console.error('未配置DeepSeek API Key');
+        alert('请先在扩展设置中配置DeepSeek API Key');
         return null;
       }
       
@@ -784,18 +784,18 @@ class TwitterScraper {
 
 注意：这是轻微改写，不是重新创作。要保持原意基本不变，只是换个表达方式。`;
       
-      // 调用Gemini API
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      // 调用DeepSeek API
+      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
+          model: 'deepseek-chat',
+          messages: [
+            { role: 'user', content: prompt }
+          ]
         })
       });
       
@@ -805,8 +805,8 @@ class TwitterScraper {
       
       const data = await response.json();
       
-      if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
-        const generatedText = data.candidates[0].content.parts[0].text.trim();
+      if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+        const generatedText = data.choices[0].message.content.trim();
         console.log('AI生成的模仿推文:', generatedText);
         
         // 确保字数限制在1000字以内
@@ -818,7 +818,7 @@ class TwitterScraper {
       }
       
     } catch (error) {
-      console.error('调用Gemini API失败:', error);
+      console.error('调用DeepSeek API失败:', error);
       alert('模仿推文生成失败: ' + error.message);
       return null;
     }
