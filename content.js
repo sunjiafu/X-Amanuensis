@@ -241,18 +241,23 @@ class TwitterScraper {
   // 检查是否在正确的页面
   isOnCorrectPage() {
     const currentUrl = window.location.href;
-    return currentUrl.includes("x.com") || currentUrl.includes("twitter.com");
+    return (
+      currentUrl.includes("x.com") ||
+      currentUrl.includes("twitter.com") ||
+      currentUrl.includes("pro.x.com")
+    );
   }
 
   // 检查是否在时间线页面（而不是推文详情页）
   isOnTimelinePage() {
     const currentUrl = window.location.href;
-    // 时间线页面的URL模式：x.com/home, x.com/following 等
+    // 时间线页面的URL模式：x.com/home, x.com/following, pro.x.com/home 等
     const timelinePatterns = [
       "/home",
       "/following",
       "x.com/$",
       "twitter.com/$",
+      "pro.x.com/$",
     ];
 
     // 不应该在推文详情页（包含 /status/ 的URL）
@@ -347,11 +352,11 @@ class TwitterScraper {
     }
 
     // 检查是否在时间线页面
-    if (!this.isOnTimelinePage()) {
-      console.log("当前不在时间线页面，导航到首页...");
-      window.location.href = "https://x.com/home";
-      return;
-    }
+      if (!this.isOnTimelinePage()) {
+        console.log("当前不在时间线页面，导航到首页...");
+        window.location.href = "https://pro.x.com/home";
+        return;
+      }
 
     this.isRunning = true;
     console.log("开始抓取Twitter信息...");

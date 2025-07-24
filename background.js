@@ -91,7 +91,12 @@ class BackgroundService {
 
   // 检查是否为Twitter标签页
   isTwitterTab(url) {
-    return url && (url.includes('twitter.com') || url.includes('x.com'));
+    return (
+      url &&
+      (url.includes('twitter.com') ||
+        url.includes('x.com') ||
+        url.includes('pro.x.com'))
+    );
   }
 
   // Twitter标签页准备就绪

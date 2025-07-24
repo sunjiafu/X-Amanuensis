@@ -55,7 +55,12 @@ class PopupController {
       }
       
       // 检查是否在Twitter页面
-      if (!tab.url || (!tab.url.includes('twitter.com') && !tab.url.includes('x.com'))) {
+      if (
+        !tab.url ||
+        (!tab.url.includes('twitter.com') &&
+          !tab.url.includes('x.com') &&
+          !tab.url.includes('pro.x.com'))
+      ) {
         throw new Error('当前页面不是Twitter/X页面');
       }
       
@@ -90,16 +95,20 @@ class PopupController {
       const tab = await this.getCurrentTab();
       
       // 如果不在Twitter页面，先导航到Twitter首页
-      if (!tab.url.includes('twitter.com') && !tab.url.includes('x.com')) {
+      if (
+        !tab.url.includes('twitter.com') &&
+        !tab.url.includes('x.com') &&
+        !tab.url.includes('pro.x.com')
+      ) {
         console.log('导航到Twitter首页...');
-        await chrome.tabs.update(tab.id, { url: 'https://x.com/home' });
+        await chrome.tabs.update(tab.id, { url: 'https://pro.x.com/home' });
         
         // 等待页面加载完成
         await new Promise(resolve => setTimeout(resolve, 5000));
         
         // 重新获取标签页信息
         const updatedTab = await chrome.tabs.get(tab.id);
-        if (!updatedTab.url.includes('x.com')) {
+        if (!updatedTab.url.includes('x.com') && !updatedTab.url.includes('pro.x.com')) {
           this.showMessage('导航到Twitter失败，请手动访问Twitter', 'error');
           return;
         }
