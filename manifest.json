@@ -13,13 +13,15 @@
   ],
   "host_permissions": [
     "https://twitter.com/*",
-    "https://x.com/*"
+    "https://x.com/*",
+    "https://pro.x.com/*"
   ],
   "content_scripts": [
     {
       "matches": [
         "https://twitter.com/*",
-        "https://x.com/*"
+        "https://x.com/*",
+        "https://pro.x.com/*"
       ],
       "js": [
         "content.js"

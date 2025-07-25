@@ -4,6 +4,15 @@ class TwitterScraper {
     this.tweets = [];
     this.isRunning = false;
     this.tweetIds = new Set(); // 用于快速查重
+    this.prompts = null;
+  }
+
+  async loadPrompts() {
+    if (this.prompts) return this.prompts;
+    const url = chrome.runtime.getURL('prompts.json');
+    const resp = await fetch(url);
+    this.prompts = await resp.json();
+    return this.prompts;
   }
 
   // 自动点击"显示更多"按钮展开推文内容
@@ -241,7 +250,11 @@ class TwitterScraper {
   // 检查是否在正确的页面
   isOnCorrectPage() {
     const currentUrl = window.location.href;
-    return currentUrl.includes("x.com") || currentUrl.includes("twitter.com");
+    return (
+      currentUrl.includes("x.com") ||
+      currentUrl.includes("twitter.com") ||
+      currentUrl.includes("pro.x.com")
+    );
   }
 
   // 检查是否在时间线页面（而不是推文详情页）
@@ -253,6 +266,7 @@ class TwitterScraper {
       "/following",
       "x.com/$",
       "twitter.com/$",
+      "pro.x.com/$",
     ];
 
     // 不应该在推文详情页（包含 /status/ 的URL）
@@ -349,7 +363,11 @@ class TwitterScraper {
     // 检查是否在时间线页面
     if (!this.isOnTimelinePage()) {
       console.log("当前不在时间线页面，导航到首页...");
-      window.location.href = "https://x.com/home";
+      if (window.location.href.includes("pro.x.com")) {
+        window.location.href = "https://pro.x.com/home";
+      } else {
+        window.location.href = "https://x.com/home";
+      }
       return;
     }
 
@@ -668,18 +686,11 @@ class TwitterScraper {
         return null;
       }
       
-      // 构建请求提示词
-      const prompt = `请为以下推文生成一个简短、友好且相关的回复（不超过280字符）：
-
-作者：${author}
-推文内容：${tweetContent}
-
-要求：
-1. 回复要有意义且相关
-2. 语气友好自然
-3. 不超过280字符
-4. 可以包含适当的表情符号
-5. 直接返回回复内容，不要包含引号或其他格式`;
+      const prompts = await this.loadPrompts();
+      let prompt = prompts.ai_reply;
+      prompt = prompt
+        .replace('{author}', author)
+        .replace('{tweet_content}', tweetContent);
       
       // 调用DeepSeek API
       const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -766,23 +777,11 @@ class TwitterScraper {
         return null;
       }
       
-      // 构建请求提示词
-      const prompt = `请基于以下推文进行微调修改，保持核心内容和结构基本不变：
-
-参考推文作者：${author}
-参考推文内容：${tweetContent}
-
-要求：
-1. 保持原推文的核心观点和主要内容
-2. 如果有@用户名或引用，必须完全保留不变
-3. 只对措辞、表达方式进行轻微调整
-4. 保持原文的语气和风格
-5. 可以调整部分用词、句式或标点符号
-6. 如有表情符号可以适当调整但不要大幅改变
-7. 控制在1000字以内
-8. 直接返回修改后的推文内容，不要包含引号或其他格式
-
-注意：这是轻微改写，不是重新创作。要保持原意基本不变，只是换个表达方式。`;
+      const prompts = await this.loadPrompts();
+      let prompt = prompts.imitate_post;
+      prompt = prompt
+        .replace('{author}', author)
+        .replace('{tweet_content}', tweetContent);
       
       // 调用DeepSeek API
       const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
