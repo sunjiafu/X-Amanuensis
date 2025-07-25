@@ -1,11 +1,20 @@
 // Popup界面控制脚本
 class PopupController {
   constructor() {
+    this.prompts = null;
     this.initializeElements();
     this.bindEvents();
     this.updateStatus();
     this.updateStats();
     this.startAutoRefresh();
+  }
+
+  async loadPrompts() {
+    if (this.prompts) return this.prompts;
+    const url = chrome.runtime.getURL('prompts.json');
+    const resp = await fetch(url);
+    this.prompts = await resp.json();
+    return this.prompts;
   }
 
   initializeElements() {
@@ -55,7 +64,7 @@ class PopupController {
       }
       
       // 检查是否在Twitter页面
-      if (!tab.url || (!tab.url.includes('twitter.com') && !tab.url.includes('x.com'))) {
+      if (!tab.url || (!tab.url.includes('twitter.com') && !tab.url.includes('x.com') && !tab.url.includes('pro.x.com'))) {
         throw new Error('当前页面不是Twitter/X页面');
       }
       
@@ -90,7 +99,7 @@ class PopupController {
       const tab = await this.getCurrentTab();
       
       // 如果不在Twitter页面，先导航到Twitter首页
-      if (!tab.url.includes('twitter.com') && !tab.url.includes('x.com')) {
+      if (!tab.url.includes('twitter.com') && !tab.url.includes('x.com') && !tab.url.includes('pro.x.com')) {
         console.log('导航到Twitter首页...');
         await chrome.tabs.update(tab.id, { url: 'https://x.com/home' });
         
@@ -99,7 +108,7 @@ class PopupController {
         
         // 重新获取标签页信息
         const updatedTab = await chrome.tabs.get(tab.id);
-        if (!updatedTab.url.includes('x.com')) {
+        if (!updatedTab.url.includes('x.com') && !updatedTab.url.includes('pro.x.com')) {
           this.showMessage('导航到Twitter失败，请手动访问Twitter', 'error');
           return;
         }
@@ -515,33 +524,11 @@ class PopupController {
         time: tweet.time
       }));
       
-      const prompt = `请分析以下Twitter推文数据，识别热点话题并创作一条原创推文。
-
-数据说明：共${tweetSummaries.length}条推文，已按互动量排序
-
-推文数据：
-${JSON.stringify(tweetSummaries, null, 2)}
-
-请严格按照以下格式返回：
-
-热点话题：
-1. 话题名称 - 描述内容
-2. 话题名称 - 描述内容  
-3. 话题名称 - 描述内容
-
-推荐推文：
-生成的推文内容（280字符以内）
-
-创作要求：
-- 识别3-5个当前热门话题或趋势
-- 推文必须是原创观点，不能照抄现有内容
-- 要有独特的见解、思考角度或个人观点
-- 可以是对热点的评论、反思、预测或不同视角
-- 语气要有个性，可以幽默、深刻或犀利
-- 避免人云亦云，要有自己的立场和想法
-- 280字符以内，可使用表情符号增强表达力
-
-注意：生成的推文应该是基于热点的原创思考，而不是简单重复或总结现有观点。`;
+      const prompts = await this.loadPrompts();
+      let prompt = prompts.trending_analysis;
+      prompt = prompt
+        .replace('{tweet_count}', tweetSummaries.length)
+        .replace('{tweet_summaries}', JSON.stringify(tweetSummaries, null, 2));
 
       const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
         method: 'POST',
