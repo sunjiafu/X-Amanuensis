@@ -654,7 +654,7 @@ class TwitterScraper {
     }
   }
   
-  // 使用Gemini API生成回复
+  // 使用OpenAI API生成回复
   async generateAiReply(tweetContent, author) {
     try {
       // 从存储中获取API Key
@@ -663,8 +663,8 @@ class TwitterScraper {
       const apiKey = config.apiKey;
       
       if (!apiKey) {
-        console.error('未配置Gemini API Key');
-        alert('请先在扩展设置中配置Gemini API Key');
+        console.error('未配置OpenAI API Key');
+        alert('请先在扩展设置中配置OpenAI API Key');
         return null;
       }
       
@@ -681,18 +681,16 @@ class TwitterScraper {
 4. 可以包含适当的表情符号
 5. 直接返回回复内容，不要包含引号或其他格式`;
       
-      // 调用Gemini API
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      // 调用OpenAI API
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
+          model: 'gpt-4-turbo',
+          messages: [{ role: 'user', content: prompt }]
         })
       });
       
@@ -702,8 +700,8 @@ class TwitterScraper {
       
       const data = await response.json();
       
-      if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
-        const generatedText = data.candidates[0].content.parts[0].text.trim();
+      if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+        const generatedText = data.choices[0].message.content.trim();
         console.log('AI生成的回复:', generatedText);
         return generatedText;
       } else {
@@ -711,9 +709,9 @@ class TwitterScraper {
         return null;
       }
       
-    } catch (error) {
-      console.error('调用Gemini API失败:', error);
-      alert('AI回复生成失败: ' + error.message);
+      } catch (error) {
+        console.error('调用OpenAI API失败:', error);
+        alert('AI回复生成失败: ' + error.message);
       return null;
     }
   }
@@ -761,8 +759,8 @@ class TwitterScraper {
       const apiKey = config.apiKey;
       
       if (!apiKey) {
-        console.error('未配置Gemini API Key');
-        alert('请先在扩展设置中配置Gemini API Key');
+        console.error('未配置OpenAI API Key');
+        alert('请先在扩展设置中配置OpenAI API Key');
         return null;
       }
       
@@ -784,18 +782,16 @@ class TwitterScraper {
 
 注意：这是轻微改写，不是重新创作。要保持原意基本不变，只是换个表达方式。`;
       
-      // 调用Gemini API
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      // 调用OpenAI API
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
+          model: 'gpt-4-turbo',
+          messages: [{ role: 'user', content: prompt }]
         })
       });
       
@@ -804,9 +800,9 @@ class TwitterScraper {
       }
       
       const data = await response.json();
-      
-      if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
-        const generatedText = data.candidates[0].content.parts[0].text.trim();
+
+      if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+        const generatedText = data.choices[0].message.content.trim();
         console.log('AI生成的模仿推文:', generatedText);
         
         // 确保字数限制在1000字以内
@@ -817,9 +813,9 @@ class TwitterScraper {
         return null;
       }
       
-    } catch (error) {
-      console.error('调用Gemini API失败:', error);
-      alert('模仿推文生成失败: ' + error.message);
+      } catch (error) {
+        console.error('调用OpenAI API失败:', error);
+        alert('模仿推文生成失败: ' + error.message);
       return null;
     }
   }

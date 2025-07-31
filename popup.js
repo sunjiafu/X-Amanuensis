@@ -402,7 +402,7 @@ class PopupController {
       const data = result.twitter_data || [];
       
       if (!config.apiKey) {
-        alert('请先配置Gemini API Key');
+        alert('请先配置OpenAI API Key');
         return;
       }
       
@@ -440,8 +440,8 @@ class PopupController {
       
       console.log(`准备分析 ${recentTweets.length} 条推文`);
       
-      // 调用Gemini API进行分析
-      const analysis = await this.callGeminiForAnalysis(recentTweets, config.apiKey);
+      // 调用OpenAI API进行分析
+      const analysis = await this.callOpenAIForAnalysis(recentTweets, config.apiKey);
       
       if (analysis) {
         this.displayAnalysisResult(analysis);
@@ -493,8 +493,8 @@ class PopupController {
     return result;
   }
   
-  // 调用Gemini API进行热点分析
-  async callGeminiForAnalysis(tweets, apiKey) {
+  // 调用OpenAI API进行热点分析
+  async callOpenAIForAnalysis(tweets, apiKey) {
     try {
       // 按热度排序推文（点赞+转发数）
       const sortedTweets = tweets.sort((a, b) => {
@@ -543,17 +543,15 @@ ${JSON.stringify(tweetSummaries, null, 2)}
 
 注意：生成的推文应该是基于热点的原创思考，而不是简单重复或总结现有观点。`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
+          model: 'gpt-4-turbo',
+          messages: [{ role: 'user', content: prompt }]
         })
       });
 
@@ -562,9 +560,9 @@ ${JSON.stringify(tweetSummaries, null, 2)}
       }
 
       const data = await response.json();
-      
-      if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
-        const analysisText = data.candidates[0].content.parts[0].text.trim();
+
+      if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+        const analysisText = data.choices[0].message.content.trim();
         console.log('API返回的原始文本:', analysisText);
         
         // 如果解析失败，显示原始文本供调试
@@ -583,7 +581,7 @@ ${JSON.stringify(tweetSummaries, null, 2)}
         throw new Error('API响应格式不正确');
       }
     } catch (error) {
-      console.error('调用Gemini API失败:', error);
+      console.error('调用OpenAI API失败:', error);
       throw error;
     }
   }
